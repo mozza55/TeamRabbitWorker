@@ -18,35 +18,39 @@ public class Worker {
     private Bootstrap b;
     private NioEventLoopGroup loopGroup;
 
-
     public static void main(String[] args) throws Exception {
-        final int MAX_FRAME_SIZE =1024;
-        EventLoopGroup group = new NioEventLoopGroup();
-        try {
-            Bootstrap b = new Bootstrap();
-            b.group(group)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {//3.채널파이프 라인 설정에 일반 소캣채널 클래스 SocketChannel 설정
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addLast(new LoggingHandler(LogLevel.INFO));
-                            //디코더 추가
-                            pipeline.addLast(new LengthFieldBasedFrameDecoder(MAX_FRAME_SIZE,2,4));
-                            //pipeline.addLast(new LineBasedFrameDecoder());
-                            pipeline.addLast(new MessageDecoder());
-                            //핸들러 추가
-                            //pipeline.addLast(serviceHandler);
-                            pipeline.addLast(new MessageHandler());
-                            pipeline.addLast(new MessageEncoder());
-
-                        }
-                    });
-            ChannelFuture f = b.connect("localhost", 8080).sync();
-            f.channel().closeFuture().sync();
-        } finally {
-            group.shutdownGracefully();
+        for(int i=0; i<10; i++){
+            Worker worker = new Worker();
+            Byte task = (byte)(i%2);
+            Runnable r = new WorkerThread(worker,i,task);
+            new Thread(r).start();
         }
+    }
 
+    public Worker() {
+        b= new Bootstrap();
+        loopGroup = new NioEventLoopGroup();
+        b.group(loopGroup).channel(NioSocketChannel.class);
+    }
+
+    public void connect(String host, int port,int workerNum,Byte taskType) throws Exception{
+        //System.out.println("Worker:connect:enter");
+
+        b.handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+                ChannelPipeline pipeline = ch.pipeline();
+                pipeline.addLast(new LoggingHandler(LogLevel.INFO));
+                //디코더 추가
+                pipeline.addLast(new LengthFieldBasedFrameDecoder(1024,2,4));
+                pipeline.addLast(new MessageDecoder());
+                pipeline.addLast(new MessageEncoder());
+                pipeline.addLast(new MessageHandler(workerNum,taskType));
+
+            }
+        });
+        ChannelFuture f = b.connect(host, port).sync();
+        f.channel().closeFuture().sync();
+        //System.out.println("Worker:connect:exit");
     }
 }

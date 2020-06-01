@@ -10,7 +10,7 @@ public class MessageEncoder extends MessageToByteEncoder<NettyMessage> {
 
     @Override
     protected void encode(ChannelHandlerContext ctx, NettyMessage msg, ByteBuf out) throws Exception {
-        System.out.println("encoder 실행");
+        //System.out.println("encoder 실행");
         if(msg == null){
             throw new Exception("message is null");
         }

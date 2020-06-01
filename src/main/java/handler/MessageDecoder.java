@@ -18,7 +18,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        System.out.println("encoder 실행");
+        //System.out.println("encoder 실행");
         byte messageType = in.readByte();
         byte taskType = in.readByte();
         int length = in.readInt();
@@ -30,7 +30,7 @@ public class MessageDecoder extends ByteToMessageDecoder {
             body = new String(req, "UTF-8");
         }
         NettyMessage nettyMessage = new NettyMessage(messageType,taskType,length,body);
-        System.out.println("netty message :"+nettyMessage.toString());
+        //System.out.println("netty message :"+nettyMessage.toString());
         out.add(nettyMessage);
     }
 }
